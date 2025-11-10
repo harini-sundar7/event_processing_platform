@@ -19,7 +19,6 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app):
-    # setup OTEL
     try:
         resource = Resource.create({"service.name": settings.SERVICE_NAME})
         provider = TracerProvider(resource=resource)
@@ -29,15 +28,12 @@ async def lifespan(app):
         FastAPIInstrumentor.instrument_app(app)
     except Exception as e:
         print(f"Failed to setup OTEL: {e}")
-        # Continue without OTEL if it fails
 
-    # Initialize Kafka producer
     producer = None
     try:
         producer = await init_kafka_producer(settings, kafka_service)
     except Exception as e:
         print(f"Failed to initialize Kafka producer: {e}")
-        # Continue without producer if it fails
     
     yield
     if producer:

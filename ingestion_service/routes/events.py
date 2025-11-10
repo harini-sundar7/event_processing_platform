@@ -32,7 +32,6 @@ async def post_event(event: Event):
 
         digest = hashlib.sha256((payload["user_id"] + payload["event_name"] + payload["timestamp"]).encode()).hexdigest()
 
-        # fire-and-forget send: create a background task so we can return quickly
         asyncio.create_task(kafka_service.send_event_to_kafka(payload))
         events_ingested.inc()
         logger.info("event_received user=%s event=%s id=%s", payload["user_id"], payload["event_name"], digest)

@@ -35,12 +35,10 @@ async def top_events(limit: int = 5, repo: EventsRepo = Depends(get_events_repo)
     queries_count.inc()
     cache_key = f"top_events:{limit}"
     try:
-        # Try cache first
         cached = await get_cache(cache_key)
         if cached:
             return {"top_events": json.loads(cached), "cached": True}
 
-        # Get from database
         result = repo.get_top_events(limit)
         await set_cache(cache_key, result, 30)
         return {"top_events": result}
@@ -55,12 +53,10 @@ async def active_users(
     """Get count of active users within the specified window."""
     queries_count.inc()
     try:
-        # Parse window
         if window.endswith("h"):
             hours = int(window[:-1])
         elif window.endswith("m"):
             minutes = int(window[:-1])
-            # Convert minutes to hours, round up to at least 1 hour
             hours = ceil(minutes / 60)
         else:
             hours = 24
@@ -85,12 +81,10 @@ async def user_events(
     queries_count.inc()
     cache_key = f"user_events:{user_id}:{limit}"
     try:
-        # Try cache first
         cached = await get_cache(cache_key)
         if cached:
             return {"user_id": user_id, "events": json.loads(cached), "cached": True}
 
-        # Get from database
         events = repo.get_user_events(user_id, limit)
         await set_cache(cache_key, events, 60)
         return {"user_id": user_id, "events": events}

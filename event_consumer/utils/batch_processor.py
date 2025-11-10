@@ -46,7 +46,6 @@ async def process_batch(
     if not records:
         return
 
-    # Parse records concurrently
     tasks = [_parse_record(r) for r in records]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     rows = [r for r in results if r is not None and not isinstance(r, Exception)]
@@ -57,7 +56,6 @@ async def process_batch(
 
     try:
         inserted = await asyncio.to_thread(insert_fn, rows_cast, get_conn)
-        # Update metrics and logs in the orchestration layer
         events_processed.inc(inserted)
         logger.info("inserted %s rows", inserted)
     except Exception:

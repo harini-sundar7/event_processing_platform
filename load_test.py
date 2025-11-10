@@ -48,19 +48,17 @@ async def run_load_test(target_rps=250, duration_seconds=30):
     """Run load test at target requests per second"""
     print(f"🚀 Starting load test: {target_rps} RPS for {duration_seconds} seconds")
 
-    semaphore = asyncio.Semaphore(target_rps * 2)  # Allow some burst capacity
+    semaphore = asyncio.Semaphore(target_rps * 2)  
     results = []
 
     async with aiohttp.ClientSession() as session:
         start_time = time.time()
         tasks = []
 
-        # Generate events for the duration
         event_id = 0
         while time.time() - start_time < duration_seconds:
             batch_start = time.time()
 
-            # Create batch of requests for this second
             batch_tasks = []
             for i in range(target_rps):
                 if time.time() - start_time >= duration_seconds:
@@ -68,7 +66,6 @@ async def run_load_test(target_rps=250, duration_seconds=30):
                 batch_tasks.append(send_event(session, event_id, semaphore))
                 event_id += 1
 
-            # Execute batch
             if batch_tasks:
                 batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
                 for r in batch_results:
@@ -82,12 +79,10 @@ async def run_load_test(target_rps=250, duration_seconds=30):
                     else:
                         results.append(r)
 
-            # Wait for next second
             elapsed = time.time() - batch_start
             if elapsed < 1.0:
                 await asyncio.sleep(1.0 - elapsed)
 
-    # Analyze results
     successful_requests = [r for r in results if r["success"]]
     failed_requests = [r for r in results if not r["success"]]
 
@@ -116,7 +111,7 @@ async def run_load_test(target_rps=250, duration_seconds=30):
             print(f"   Event {error['event_id']}: {error.get('error', 'Unknown error')}")
 
     return {
-        "success": success_rate >= 95,  # 95% success rate threshold
+        "success": success_rate >= 95,  
         "actual_rps": actual_rps,
         "success_rate": success_rate,
         "avg_response_time": avg_response_time,

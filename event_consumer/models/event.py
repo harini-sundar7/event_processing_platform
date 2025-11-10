@@ -12,6 +12,5 @@ class Event(BaseModel):
     timestamp: datetime
 
     def event_id(self) -> str:
-        # deterministic id for idempotency
         key = f"{self.user_id}|{self.event_name}|{self.timestamp.isoformat()}|{json.dumps(self.metadata, sort_keys=True)}"
         return hashlib.sha256(key.encode()).hexdigest()

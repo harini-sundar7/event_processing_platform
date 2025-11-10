@@ -18,7 +18,6 @@ def with_cursor(cursor_factory: Optional[object] = None):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
-            # import here to avoid import cycles at module import time
             from config.database import get_connection
 
             conn = getattr(self, "_conn", None)

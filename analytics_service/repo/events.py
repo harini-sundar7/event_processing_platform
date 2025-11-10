@@ -56,7 +56,6 @@ class EventsRepo:
             row = self._cur.fetchone()
             return row[0]
 
-        # call inner helper so the decorator can provide a cursor
         return _inner(self)
 
     @with_cursor(cursor_factory=psycopg2.extras.DictCursor)

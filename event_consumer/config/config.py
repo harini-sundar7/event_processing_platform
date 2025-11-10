@@ -10,11 +10,9 @@ class Settings(BaseSettings):
 
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://otel-collector:4318"
 
-    # Optimized for high throughput
-    BATCH_SIZE: int = 500  # Increased from 100
-    BATCH_TIMEOUT: float = 0.5  # Reduced from 1.0 for faster processing
+    BATCH_SIZE: int = 500  
+    BATCH_TIMEOUT: float = 0.5  
 
-    # Connection pooling
     MAX_CONNECTIONS: int = 20
     CONNECTION_TIMEOUT: float = 30.0
 

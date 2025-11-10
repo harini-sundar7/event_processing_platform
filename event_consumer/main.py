@@ -24,14 +24,11 @@ tracer = init_tracer(settings, service_name="event-consumer")
 
 
 async def main():
-    # start prometheus metrics server
     start_http_server(settings.METRICS_PORT)
     logger.info("metrics available on %s", settings.METRICS_PORT)
 
-    # initialize consumer
     consumer = create_consumer(settings)
     
-    # ensure schema using a connection from the provider
     with get_conn() as conn:
         ensure_table(conn)
 
@@ -40,7 +37,6 @@ async def main():
     batch_timeout = settings.BATCH_TIMEOUT
     last_flush = time.time()
 
-    # create a producer to handle DLQ messages
     dlq_producer = create_dlq_producer(settings)
 
     async def _process_batch_with_retry(batch_to_proc):
@@ -50,9 +46,8 @@ async def main():
                 await process_batch(batch_to_proc, get_conn)
                 return
             except Exception as e:
-                if attempt == 2:  # Last attempt
+                if attempt == 2:  
                     logger.exception("batch processing failed after retries, sending to DLQ: %s", e)
-                    # send individual messages to DLQ topic
                     for failed_msg in batch_to_proc:
                         try:
                             payload = failed_msg.value.decode() if isinstance(failed_msg.value, (bytes, bytearray)) else failed_msg.value
@@ -60,7 +55,7 @@ async def main():
                         except Exception:
                             logger.exception("failed to send to dlq")
                 else:
-                    wait_time = 2 ** attempt  # Exponential backoff
+                    wait_time = 2 ** attempt  
                     logger.warning(f"batch processing failed (attempt {attempt + 1}), retrying in {wait_time}s")
                     await asyncio.sleep(wait_time)
 
@@ -68,7 +63,6 @@ async def main():
         while True:
             for msg in consumer:
                 batch.append(msg)
-                # approximate lag metric
                 consumer_lag.inc()
                 now = time.time()
                 if len(batch) >= batch_size or (now - last_flush) >= batch_timeout:
@@ -76,18 +70,16 @@ async def main():
                     batch = []
                     last_flush = now
             
-            # consumer timed out (no messages), flush any pending
             if batch:
                 await _process_batch_with_retry(batch)
                 batch = []
             
-            await asyncio.sleep(0.1)  # Small async sleep
+            await asyncio.sleep(0.1) 
             
     except KeyboardInterrupt:
         logger.info("shutting down consumer")
     finally:
         consumer.close()
-        # no pool to close; get_conn yields/closes per use
         dlq_producer.flush()
         dlq_producer.close()
 
